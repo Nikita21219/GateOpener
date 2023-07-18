@@ -1,8 +1,10 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"main/pkg/clients/telegram"
+	event_consumer "main/pkg/consumer/event-consumer"
+	telegram2 "main/pkg/events/telegram"
 	"os"
 )
 
@@ -14,5 +16,9 @@ func main() {
 	//}
 
 	tgClient := telegram.New("api.telegram.org", os.Getenv("BOT_TOKEN"))
-	fmt.Println(tgClient)
+	eventsProcessor := telegram2.New(tgClient)
+	consumer := event_consumer.New(eventsProcessor, eventsProcessor, 100)
+	if err := consumer.Start(); err != nil {
+		log.Fatalln("error to start consumer:", err)
+	}
 }
