@@ -1,4 +1,4 @@
-package gatecontroller
+package gate_controller
 
 import (
 	"encoding/json"

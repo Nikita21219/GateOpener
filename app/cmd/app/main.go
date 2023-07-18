@@ -3,13 +3,13 @@ package main
 import (
 	"log"
 	"main/pkg/clients/telegram"
-	event_consumer "main/pkg/consumer/event-consumer"
+	"main/pkg/consumer/event-consumer"
 	telegram2 "main/pkg/events/telegram"
 	"os"
 )
 
 func main() {
-	//err := gatecontroller.ControlGate(true)
+	//err := gate-controller.ControlGate(true)
 	//
 	//if err != nil {
 	//	fmt.Println("Error to do action with gate:", err)

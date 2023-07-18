@@ -28,7 +28,7 @@ func (c *Consumer) Start() error {
 			continue
 		}
 		if len(gotEvents) == 0 {
-			time.Sleep(1 * time.Second)
+			time.Sleep(100 * time.Millisecond)
 			continue
 		}
 		c.handleEvents(gotEvents)
@@ -37,8 +37,6 @@ func (c *Consumer) Start() error {
 
 func (c *Consumer) handleEvents(events []events.Event) {
 	for _, e := range events {
-		log.Printf("got new event: %s", e.Text)
-
 		if err := c.processor.Process(e); err != nil {
 			log.Printf("can't handle event: %s", err.Error())
 			continue
