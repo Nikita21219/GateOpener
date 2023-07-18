@@ -1,16 +1,17 @@
 package telegram
 
 import (
+	"context"
 	"log"
-	"main/pkg/gate-controller"
 	"strings"
 )
 
 const (
-	StartCmd         = "/start"
-	HelpCmd          = "/help"
-	OpenGateEntryCmd = "/openGateEntry"
-	OpenGateExitCmd  = "/openGateExit"
+	StartCmd                = "/start"
+	HelpCmd                 = "/help"
+	OpenGateEntryCmd        = "/openGateEntry"
+	OpenGateExitCmd         = "/openGateExit"
+	OpeningGateEntryModeCmd = "/openGateEntryMode"
 )
 
 func (p *Processor) doCmd(text string, chatID int, username string) error {
@@ -26,6 +27,8 @@ func (p *Processor) doCmd(text string, chatID int, username string) error {
 		return p.sendOpenGateEntry(chatID)
 	case OpenGateExitCmd:
 		return p.sendOpenGateExit(chatID)
+	case OpeningGateEntryModeCmd:
+		return p.sendOpeningGateModeCmd(chatID)
 	default:
 		return p.tg.SendMessage(chatID, msgUnknownCommand)
 	}
@@ -40,7 +43,7 @@ func (p *Processor) sendHelp(chatID int) error {
 }
 
 func (p *Processor) sendOpenGateEntry(chatID int) error {
-	if err := gate_controller.ControlGate(true); err != nil {
+	if err := p.gc.OpenGate(true); err != nil {
 		log.Printf("cant open gate: %s\n", err)
 		return p.tg.SendMessage(chatID, msgCantGateOpen)
 	}
@@ -48,9 +51,14 @@ func (p *Processor) sendOpenGateEntry(chatID int) error {
 }
 
 func (p *Processor) sendOpenGateExit(chatID int) error {
-	if err := gate_controller.ControlGate(false); err != nil {
+	if err := p.gc.OpenGate(false); err != nil {
 		log.Printf("cant open gate: %s\n", err)
 		return p.tg.SendMessage(chatID, msgCantGateOpen)
 	}
 	return p.tg.SendMessage(chatID, msgGateOpened)
+}
+
+func (p *Processor) sendOpeningGateModeCmd(chatID int) error {
+	p.gc.OpenGateAlways(context.Background())
+	return p.tg.SendMessage(chatID, msgGateOpeningModeActivated)
 }

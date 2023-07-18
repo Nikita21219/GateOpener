@@ -1,31 +1,30 @@
 package telegram
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"main/pkg/clients/telegram"
 	"main/pkg/events"
+	gate_controller "main/pkg/gate-controller"
 )
 
 var (
 	ErrUnknownEventType = errors.New("unknown event type")
 	ErrUnknownMetaType  = errors.New("unknown meta type")
+	urlAMVideoApi       = "https://lk.amvideo-msk.ru/api/api4.php"
 )
 
 type Processor struct {
 	tg     *telegram.Client
 	offset int
+	gc     *gate_controller.GateController
+	ctx    context.Context
 }
 
 type Meta struct {
 	ChatID   int
 	Username string
-}
-
-func New(client *telegram.Client) *Processor {
-	return &Processor{
-		tg: client,
-	}
 }
 
 func (p *Processor) Fetch(limit int) ([]events.Event, error) {
@@ -107,4 +106,14 @@ func fetchType(u telegram.Update) events.Type {
 		return events.Unknown
 	}
 	return events.Message
+}
+
+func New(client *telegram.Client) *Processor {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	return &Processor{
+		tg:  client,
+		gc:  gate_controller.NewController(urlAMVideoApi),
+		ctx: ctx,
+	}
 }

@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	//err := gate-controller.ControlGate(true)
+	//err := gate-controller.OpenGate(true)
 	//
 	//if err != nil {
 	//	fmt.Println("Error to do action with gate:", err)

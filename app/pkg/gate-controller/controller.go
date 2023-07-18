@@ -1,18 +1,23 @@
 package gate_controller
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"main/internal/amvideo"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
-const url = "https://lk.amvideo-msk.ru/api/api4.php"
+type GateController struct {
+	urlAMVideo string
+}
 
-func addHeaders(r *http.Request) {
+func (gc *GateController) addHeaders(r *http.Request) {
 	r.Header.Add("Host", "lk.amvideo-msk.ru")
 	r.Header.Add("content-type", "application/x-www-form-urlencoded; charset=UTF-8")
 	r.Header.Add("accept", "application/json, text/javascript, */*; q=0.01")
@@ -26,7 +31,7 @@ func addHeaders(r *http.Request) {
 	r.Header.Add("cache-control", "no-cache")
 }
 
-func ControlGate(entry bool) error {
+func (gc *GateController) OpenGate(entry bool) error {
 	var gateId string
 
 	client := http.Client{}
@@ -39,12 +44,12 @@ func ControlGate(entry bool) error {
 
 	bodyStr := fmt.Sprintf("type=open&id_shlag=%s&relay=0&sid=%s", gateId, os.Getenv("SID"))
 	body := strings.NewReader(bodyStr)
-	request, err := http.NewRequest("POST", url, body)
+	request, err := http.NewRequest("POST", gc.urlAMVideo, body)
 	if err != nil {
 		return err
 	}
 
-	addHeaders(request)
+	gc.addHeaders(request)
 
 	resp, err := client.Do(request)
 	if err != nil {
@@ -68,4 +73,33 @@ func ControlGate(entry bool) error {
 	}
 
 	return nil
+}
+
+func (gc *GateController) OpenGateAlways(ctx context.Context) {
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				log.Println("gate opening mode stop")
+				return
+			default:
+				log.Println("gate opening mode active...")
+				err := gc.OpenGate(true)
+				if err != nil {
+					log.Println("error to open gate to entry:", err)
+				}
+				err = gc.OpenGate(false)
+				if err != nil {
+					log.Println("error to open gate to exit:", err)
+				}
+				time.Sleep(1 * time.Second)
+			}
+		}
+	}()
+}
+
+func NewController(urlAMVideoApi string) *GateController {
+	return &GateController{
+		urlAMVideo: urlAMVideoApi,
+	}
 }
