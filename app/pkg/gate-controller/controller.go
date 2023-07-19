@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -80,19 +81,26 @@ func (gc *GateController) OpenGateAlways(openingGateMode chan bool) {
 			select {
 			case gateMode := <-openingGateMode:
 				if !gateMode {
-					log.Println("gate opening mode stop")
+					log.Println("gate opening mode stoped")
 					return
 				}
 			default:
+				wg := sync.WaitGroup{}
 				log.Println("gate opening mode active...")
-				err := gc.OpenGate(true)
-				if err != nil {
-					log.Println("error to open gate to entry:", err)
+
+				for _, val := range []bool{true, false} {
+					wg.Add(1)
+					val := val
+					go func() {
+						defer wg.Done()
+						err := gc.OpenGate(val)
+						if err != nil {
+							log.Println("error to open gate to entry:", err)
+						}
+					}()
 				}
-				err = gc.OpenGate(false)
-				if err != nil {
-					log.Println("error to open gate to exit:", err)
-				}
+
+				wg.Wait()
 				time.Sleep(1 * time.Second)
 			}
 		}
