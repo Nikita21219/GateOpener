@@ -1,13 +1,13 @@
 package telegram
 
 const msgHelp = `
-/openGateEntry - открыть шлагбаум на въезд
+/open_entry - открыть шлагбаум на въезд
 
-/openGateExit - открыть шлагбаум на выезд
+/open_exit - открыть шлагбаум на выезд
 
-/openingMode - активировать режим открытия шлагбаумов
+/opening_mode - активировать режим открытия шлагбаумов
 
-/openingModeStop - деактивировать режим открытия шлагбаумов
+/opening_mode_stop - деактивировать режим открытия шлагбаумов
 `
 
 const msgHello = `

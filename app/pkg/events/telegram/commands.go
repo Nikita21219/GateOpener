@@ -9,10 +9,10 @@ import (
 const (
 	StartCmd                    = "start"
 	HelpCmd                     = "help"
-	OpenGateEntryCmd            = "openGateEntry"
-	OpenGateExitCmd             = "openGateExit"
-	OpeningGateEntryModeCmd     = "openingMode"
-	OpeningGateEntryModeStopCmd = "openingModeStop"
+	OpenGateEntryCmd            = "open_entry"
+	OpenGateExitCmd             = "open_exit"
+	OpeningGateEntryModeCmd     = "opening_mode"
+	OpeningGateEntryModeStopCmd = "opening_mode_stop"
 
 	urlAMVideoApi = "https://lk.amvideo-msk.ru/api/api4.php"
 )
