@@ -1,0 +1,15 @@
+version: '3.9'
+
+services:
+  app:
+    container_name: tgbot_gate_opener
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN}
+      SID: ${SID}
+    build:
+      context: app
+    networks:
+      - tgbot_gate_opener_net
+
+networks:
+  tgbot_gate_opener_net:
