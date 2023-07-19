@@ -1,64 +1,134 @@
 package telegram
 
 import (
-	"context"
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"log"
-	"strings"
+	gate_controller "main/pkg/gate-controller"
 )
 
 const (
-	StartCmd                = "/start"
-	HelpCmd                 = "/help"
-	OpenGateEntryCmd        = "/openGateEntry"
-	OpenGateExitCmd         = "/openGateExit"
-	OpeningGateEntryModeCmd = "/openGateEntryMode"
+	StartCmd                    = "start"
+	HelpCmd                     = "help"
+	OpenGateEntryCmd            = "openGateEntry"
+	OpenGateExitCmd             = "openGateExit"
+	OpeningGateEntryModeCmd     = "openGateEntryMode"
+	OpeningGateEntryModeStopCmd = "openGateEntryModeStop"
 )
 
-func (p *Processor) doCmd(text string, chatID int, username string) error {
-	text = strings.TrimSpace(text)
-	log.Printf("got new command '%s' from %s\n", text, username)
+type CommandsHandler struct {
+	bot    *tgbotapi.BotAPI
+	update tgbotapi.Update
+	gc     *gate_controller.GateController
+}
 
-	switch text {
+func NewCommandsHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) *CommandsHandler {
+	return &CommandsHandler{
+		bot:    bot,
+		update: update,
+		gc:     gate_controller.NewController(urlAMVideoApi),
+	}
+}
+
+func (ch *CommandsHandler) Handle(openingGateMode chan bool) {
+	switch ch.update.Message.Command() {
 	case StartCmd:
-		return p.sendHello(chatID)
+		ch.sendHello()
 	case HelpCmd:
-		return p.sendHelp(chatID)
+		ch.sendHelp()
 	case OpenGateEntryCmd:
-		return p.sendOpenGateEntry(chatID)
+		ch.sendOpenGateEntry()
 	case OpenGateExitCmd:
-		return p.sendOpenGateExit(chatID)
+		ch.sendOpenGateExit()
 	case OpeningGateEntryModeCmd:
-		return p.sendOpeningGateModeCmd(chatID)
+		ch.sendOpeningGateModeCmd(openingGateMode)
+	case OpeningGateEntryModeStopCmd:
+		ch.sendOpeningGateModeStopCmd(openingGateMode)
 	default:
-		return p.tg.SendMessage(chatID, msgUnknownCommand)
+		ch.sendMsg("Я тебя не понимаю")
+	}
+
+	//if ch.update.Message.Command() == "start" {
+	//	ch.sendMsg("Hello world")
+	//
+	//	go func() {
+	//		for {
+	//			select {
+	//			case stopPrinting := <-printCh:
+	//				if stopPrinting {
+	//					fmt.Println("Печать остановлена")
+	//					return
+	//				}
+	//			default:
+	//				log.Println("Printing...")
+	//				time.Sleep(500 * time.Millisecond)
+	//			}
+	//		}
+	//	}()
+	//}
+	//
+	//if ch.update.Message.Command() == "stop" {
+	//	printCh <- true
+	//}
+}
+
+func (ch *CommandsHandler) sendMsg(messageText string) {
+	msg := tgbotapi.NewMessage(ch.update.Message.Chat.ID, messageText)
+	_, err := ch.bot.Send(msg)
+	if err != nil {
+		log.Println("Ошибка отправки сообщения:", err)
 	}
 }
 
-func (p *Processor) sendHello(chatID int) error {
-	return p.tg.SendMessage(chatID, msgHello)
+//func (p *Processor) doCmd(text string, chatID int, username string) error {
+//	text = strings.TrimSpace(text)
+//	log.Printf("got new command '%s' from %s\n", text, username)
+//
+//	switch text {
+//	case StartCmd:
+//		return p.sendHello()
+//	case HelpCmd:
+//		return p.sendHelp()
+//	case OpenGateEntryCmd:
+//		return p.sendOpenGateEntry()
+//	case OpenGateExitCmd:
+//		return p.sendOpenGateExit()
+//	case OpeningGateEntryModeCmd:
+//		return p.sendOpeningGateModeCmd()
+//	default:
+//		return p.tg.SendMessage(chatID, msgUnknownCommand)
+//	}
+//}
+
+func (ch *CommandsHandler) sendHello() {
+	ch.sendMsg(msgHello)
 }
 
-func (p *Processor) sendHelp(chatID int) error {
-	return p.tg.SendMessage(chatID, msgHelp)
+func (ch *CommandsHandler) sendHelp() {
+	ch.sendMsg(msgHelp)
 }
 
-func (p *Processor) sendOpenGateEntry(chatID int) error {
-	if err := p.gc.OpenGate(true); err != nil {
+func (ch *CommandsHandler) sendOpenGateEntry() {
+	if err := ch.gc.OpenGate(true); err != nil {
 		log.Printf("cant open gate: %s\n", err)
-		return p.tg.SendMessage(chatID, msgCantGateOpen)
+		ch.sendMsg(msgCantGateOpen)
 	}
-	return p.tg.SendMessage(chatID, msgGateOpened)
+	ch.sendMsg(msgGateOpened)
 }
 
-func (p *Processor) sendOpenGateExit(chatID int) error {
-	if err := p.gc.OpenGate(false); err != nil {
+func (ch *CommandsHandler) sendOpenGateExit() {
+	if err := ch.gc.OpenGate(false); err != nil {
 		log.Printf("cant open gate: %s\n", err)
-		return p.tg.SendMessage(chatID, msgCantGateOpen)
+		ch.sendMsg(msgCantGateOpen)
 	}
-	return p.tg.SendMessage(chatID, msgGateOpened)
+	ch.sendMsg(msgGateOpened)
 }
 
-func (p *Processor) sendOpeningGateModeCmd(chatID int) error {
-	p.gc.OpenGateAlways(context.Background())
-	return p.tg.SendMessage(chatID, msgGateOpeningModeActivated)
+func (ch *CommandsHandler) sendOpeningGateModeCmd(openingGateMode chan bool) {
+	ch.gc.OpenGateAlways(openingGateMode)
+	ch.sendMsg(msgGateOpeningModeActivated)
+}
+
+func (ch *CommandsHandler) sendOpeningGateModeStopCmd(openingGateMode chan bool) {
+	openingGateMode <- false
+	ch.sendMsg(msgGateOpeningModeDeactivated)
 }

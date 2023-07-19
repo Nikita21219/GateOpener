@@ -57,14 +57,14 @@ func (p *Processor) Process(e events.Event) error {
 }
 
 func (p *Processor) processMessage(e events.Event) error {
-	meta, err := meta(e)
+	_, err := meta(e)
 	if err != nil {
 		return fmt.Errorf("can't process message: %w", err)
 	}
 
-	if err = p.doCmd(e.Text, meta.ChatID, meta.Username); err != nil {
-		return fmt.Errorf("can't process message: %w", err)
-	}
+	//if err = p.doCmd(e.Text, meta.ChatID, meta.Username); err != nil {
+	//	return fmt.Errorf("can't process message: %w", err)
+	//}
 	return nil
 }
 

@@ -1,24 +1,36 @@
 package main
 
 import (
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"log"
-	"main/pkg/clients/telegram"
-	"main/pkg/consumer/event-consumer"
-	telegram2 "main/pkg/events/telegram"
+	"main/pkg/events/telegram"
 	"os"
 )
 
 func main() {
-	//err := gate-controller.OpenGate(true)
-	//
-	//if err != nil {
-	//	fmt.Println("Error to do action with gate:", err)
-	//}
+	if os.Getenv("BOT_TOKEN") == "" || os.Getenv("SID") == "" {
+		log.Fatalln("Bot token or SID empty")
+	}
 
-	tgClient := telegram.New("api.telegram.org", os.Getenv("BOT_TOKEN"))
-	eventsProcessor := telegram2.New(tgClient)
-	consumer := event_consumer.New(eventsProcessor, eventsProcessor, 100)
-	if err := consumer.Start(); err != nil {
-		log.Fatalln("error to start consumer:", err)
+	bot, err := tgbotapi.NewBotAPI(os.Getenv("BOT_TOKEN"))
+	if err != nil {
+		log.Fatal(err)
+	}
+	bot.Debug = false
+
+	u := tgbotapi.NewUpdate(0)
+	u.Timeout = 30
+	updates, err := bot.GetUpdatesChan(u)
+	openingGateMode := make(chan bool)
+
+	for update := range updates {
+		if update.Message == nil {
+			continue
+		}
+
+		if update.Message.IsCommand() {
+			commandHandler := telegram.NewCommandsHandler(bot, update)
+			commandHandler.Handle(openingGateMode)
+		}
 	}
 }
