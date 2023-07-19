@@ -11,8 +11,10 @@ const (
 	HelpCmd                     = "help"
 	OpenGateEntryCmd            = "openGateEntry"
 	OpenGateExitCmd             = "openGateExit"
-	OpeningGateEntryModeCmd     = "openGateEntryMode"
-	OpeningGateEntryModeStopCmd = "openGateEntryModeStop"
+	OpeningGateEntryModeCmd     = "openingMode"
+	OpeningGateEntryModeStopCmd = "openingModeStop"
+
+	urlAMVideoApi = "https://lk.amvideo-msk.ru/api/api4.php"
 )
 
 type CommandsHandler struct {
@@ -44,31 +46,8 @@ func (ch *CommandsHandler) Handle(openingGateMode chan bool) {
 	case OpeningGateEntryModeStopCmd:
 		ch.sendOpeningGateModeStopCmd(openingGateMode)
 	default:
-		ch.sendMsg("Я тебя не понимаю")
+		ch.sendMsg(msgUnknownCommand)
 	}
-
-	//if ch.update.Message.Command() == "start" {
-	//	ch.sendMsg("Hello world")
-	//
-	//	go func() {
-	//		for {
-	//			select {
-	//			case stopPrinting := <-printCh:
-	//				if stopPrinting {
-	//					fmt.Println("Печать остановлена")
-	//					return
-	//				}
-	//			default:
-	//				log.Println("Printing...")
-	//				time.Sleep(500 * time.Millisecond)
-	//			}
-	//		}
-	//	}()
-	//}
-	//
-	//if ch.update.Message.Command() == "stop" {
-	//	printCh <- true
-	//}
 }
 
 func (ch *CommandsHandler) sendMsg(messageText string) {
@@ -78,26 +57,6 @@ func (ch *CommandsHandler) sendMsg(messageText string) {
 		log.Println("Ошибка отправки сообщения:", err)
 	}
 }
-
-//func (p *Processor) doCmd(text string, chatID int, username string) error {
-//	text = strings.TrimSpace(text)
-//	log.Printf("got new command '%s' from %s\n", text, username)
-//
-//	switch text {
-//	case StartCmd:
-//		return p.sendHello()
-//	case HelpCmd:
-//		return p.sendHelp()
-//	case OpenGateEntryCmd:
-//		return p.sendOpenGateEntry()
-//	case OpenGateExitCmd:
-//		return p.sendOpenGateExit()
-//	case OpeningGateEntryModeCmd:
-//		return p.sendOpeningGateModeCmd()
-//	default:
-//		return p.tg.SendMessage(chatID, msgUnknownCommand)
-//	}
-//}
 
 func (ch *CommandsHandler) sendHello() {
 	ch.sendMsg(msgHello)

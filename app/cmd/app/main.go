@@ -7,16 +7,25 @@ import (
 	"os"
 )
 
-func main() {
+func mustCheckEnvVars() bool {
 	if os.Getenv("BOT_TOKEN") == "" || os.Getenv("SID") == "" {
 		log.Fatalln("Bot token or SID empty")
 	}
 
+	debugMode := false
+	if debug := os.Getenv("DEBUG"); debug == "1" || debug == "true" {
+		debugMode = true
+	}
+	return debugMode
+}
+
+func main() {
+	debug := mustCheckEnvVars()
 	bot, err := tgbotapi.NewBotAPI(os.Getenv("BOT_TOKEN"))
 	if err != nil {
 		log.Fatal(err)
 	}
-	bot.Debug = false
+	bot.Debug = debug
 
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 30
