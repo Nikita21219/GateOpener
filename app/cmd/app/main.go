@@ -5,11 +5,18 @@ import (
 	"log"
 	"main/pkg/events/telegram"
 	"os"
+	"strings"
 )
 
 func mustCheckEnvVars() bool {
-	if os.Getenv("BOT_TOKEN") == "" || os.Getenv("SID") == "" {
-		log.Fatalln("Bot token or SID empty")
+	for _, envVar := range []string{
+		"BOT_TOKEN",
+		"SID",
+		"ADMINS",
+	} {
+		if os.Getenv(envVar) == "" {
+			log.Fatalf("Error: env var \"%s\" empty\n", envVar)
+		}
 	}
 
 	debugMode := false
@@ -17,6 +24,15 @@ func mustCheckEnvVars() bool {
 		debugMode = true
 	}
 	return debugMode
+}
+
+func initAdmins() map[string]struct{} {
+	admins := make(map[string]struct{})
+	administrators := strings.Split(os.Getenv("ADMINS"), ", ")
+	for _, a := range administrators {
+		admins[a] = struct{}{}
+	}
+	return admins
 }
 
 func main() {
@@ -32,13 +48,19 @@ func main() {
 	updates, err := bot.GetUpdatesChan(u)
 	openingGateMode := make(chan bool)
 
+	admins := initAdmins()
 	for update := range updates {
 		if update.Message == nil {
 			continue
 		}
+		log.Printf("User @%s sended message: %s\n", update.Message.Chat.UserName, update.Message.Text)
 
 		if update.Message.IsCommand() {
 			commandHandler := telegram.NewCommandsHandler(bot, update)
+			if _, ok := admins[update.Message.Chat.UserName]; !ok {
+				commandHandler.SendMsg(telegram.MsgNotAllowedControl)
+				continue
+			}
 			commandHandler.Handle(openingGateMode)
 		}
 	}

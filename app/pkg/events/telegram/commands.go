@@ -46,11 +46,11 @@ func (ch *CommandsHandler) Handle(openingGateMode chan bool) {
 	case OpeningGateEntryModeStopCmd:
 		ch.sendOpeningGateModeStopCmd(openingGateMode)
 	default:
-		ch.sendMsg(msgUnknownCommand)
+		ch.SendMsg(MsgUnknownCommand)
 	}
 }
 
-func (ch *CommandsHandler) sendMsg(messageText string) {
+func (ch *CommandsHandler) SendMsg(messageText string) {
 	msg := tgbotapi.NewMessage(ch.update.Message.Chat.ID, messageText)
 	_, err := ch.bot.Send(msg)
 	if err != nil {
@@ -59,35 +59,35 @@ func (ch *CommandsHandler) sendMsg(messageText string) {
 }
 
 func (ch *CommandsHandler) sendHello() {
-	ch.sendMsg(msgHello)
+	ch.SendMsg(msgHello)
 }
 
 func (ch *CommandsHandler) sendHelp() {
-	ch.sendMsg(msgHelp)
+	ch.SendMsg(msgHelp)
 }
 
 func (ch *CommandsHandler) sendOpenGateEntry() {
 	if err := ch.gc.OpenGate(true); err != nil {
 		log.Printf("cant open gate: %s\n", err)
-		ch.sendMsg(msgCantGateOpen)
+		ch.SendMsg(msgCantGateOpen)
 	}
-	ch.sendMsg(msgGateOpened)
+	ch.SendMsg(msgGateOpened)
 }
 
 func (ch *CommandsHandler) sendOpenGateExit() {
 	if err := ch.gc.OpenGate(false); err != nil {
 		log.Printf("cant open gate: %s\n", err)
-		ch.sendMsg(msgCantGateOpen)
+		ch.SendMsg(msgCantGateOpen)
 	}
-	ch.sendMsg(msgGateOpened)
+	ch.SendMsg(msgGateOpened)
 }
 
 func (ch *CommandsHandler) sendOpeningGateModeCmd(openingGateMode chan bool) {
 	ch.gc.OpenGateAlways(openingGateMode)
-	ch.sendMsg(msgGateOpeningModeActivated)
+	ch.SendMsg(msgGateOpeningModeActivated)
 }
 
 func (ch *CommandsHandler) sendOpeningGateModeStopCmd(openingGateMode chan bool) {
 	openingGateMode <- false
-	ch.sendMsg(msgGateOpeningModeDeactivated)
+	ch.SendMsg(msgGateOpeningModeDeactivated)
 }
