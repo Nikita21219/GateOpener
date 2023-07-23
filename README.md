@@ -6,3 +6,10 @@
 - Открыть шлагбаум на выезд
 - Активировать режим бесконечного открытия шлагбаумов
 - Деактивировать режим бесконечного открытия шлагбаумов
+
+Usage:  
+``` bash
+echo BOT_TOKEN=<YOUR_BOT_TOKEN> > .env; \
+echo SID=<YOUR_USER_ID_TO_OPEN_GATES> > .env; \
+docker-compose up -d
+```
