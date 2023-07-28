@@ -9,7 +9,7 @@
 
 Usage:  
 ``` bash
-echo BOT_TOKEN=<YOUR_BOT_TOKEN> > .env; \
-echo SID=<YOUR_USER_ID_TO_OPEN_GATES> > .env; \
+echo BOT_TOKEN=<YOUR_BOT_TOKEN> >> .env; \
+echo SID=<YOUR_USER_ID_TO_OPEN_GATES> >> .env; \
 docker-compose up -d
 ```
