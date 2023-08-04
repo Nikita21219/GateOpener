@@ -81,7 +81,7 @@ func (gc *GateController) OpenGateAlways(openingGateMode chan bool) {
 			select {
 			case gateMode := <-openingGateMode:
 				if !gateMode {
-					log.Println("gate opening mode stoped")
+					log.Println("gate opening mode stopped")
 					return
 				}
 			default:

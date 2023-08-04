@@ -88,6 +88,8 @@ func (ch *CommandsHandler) sendOpeningGateModeCmd(openingGateMode chan bool) {
 }
 
 func (ch *CommandsHandler) sendOpeningGateModeStopCmd(openingGateMode chan bool) {
-	openingGateMode <- false
+	go func() {
+		openingGateMode <- false
+	}()
 	ch.SendMsg(msgGateOpeningModeDeactivated)
 }

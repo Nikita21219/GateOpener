@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"log"
 	"main/pkg/events/telegram"
@@ -35,6 +36,17 @@ func initAdmins() map[string]struct{} {
 	return admins
 }
 
+func logUserMessage(update tgbotapi.Update) {
+	var userName string
+	if update.Message.Chat.UserName != "" {
+		userName = fmt.Sprintf("@%s", update.Message.Chat.UserName)
+	} else {
+		userName = fmt.Sprintf("%s %s", update.Message.Chat.FirstName, update.Message.Chat.LastName)
+	}
+
+	log.Printf("User %s sended message: %s\n", userName, update.Message.Text)
+}
+
 func main() {
 	debug := mustCheckEnvVars()
 	bot, err := tgbotapi.NewBotAPI(os.Getenv("BOT_TOKEN"))
@@ -53,7 +65,8 @@ func main() {
 		if update.Message == nil {
 			continue
 		}
-		log.Printf("User @%s sended message: %s\n", update.Message.Chat.UserName, update.Message.Text)
+
+		logUserMessage(update)
 
 		if update.Message.IsCommand() {
 			commandHandler := telegram.NewCommandsHandler(bot, update)
