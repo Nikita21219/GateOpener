@@ -70,6 +70,7 @@ func (ch *CommandsHandler) sendOpenGateEntry() {
 	if err := ch.gc.OpenGate(true); err != nil {
 		log.Printf("cant open gate: %s\n", err)
 		ch.SendMsg(msgCantGateOpen)
+		return
 	}
 	ch.SendMsg(msgGateOpened)
 }
@@ -78,6 +79,7 @@ func (ch *CommandsHandler) sendOpenGateExit() {
 	if err := ch.gc.OpenGate(false); err != nil {
 		log.Printf("cant open gate: %s\n", err)
 		ch.SendMsg(msgCantGateOpen)
+		return
 	}
 	ch.SendMsg(msgGateOpened)
 }
