@@ -1,6 +1,7 @@
 package gate_controller
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -75,15 +76,13 @@ func (gc *GateController) OpenGate(entry bool) error {
 	return nil
 }
 
-func (gc *GateController) OpenGateAlways(openingGateMode chan bool) {
+func (gc *GateController) OpenGateAlways(ctx context.Context) {
 	go func() {
 		for {
 			select {
-			case gateMode := <-openingGateMode:
-				if !gateMode {
-					log.Println("gate opening mode stopped")
-					return
-				}
+			case <-ctx.Done():
+				log.Println("gate opening mode stopped")
+				return
 			default:
 				wg := sync.WaitGroup{}
 				log.Println("gate opening mode active...")

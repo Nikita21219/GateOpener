@@ -1,10 +1,12 @@
 package telegram
 
 import (
+	"context"
 	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"log"
 	gate_controller "main/pkg/gate-controller"
+	"time"
 )
 
 const (
@@ -32,7 +34,16 @@ func NewCommandsHandler(bot *tgbotapi.BotAPI, update tgbotapi.Update) *CommandsH
 	}
 }
 
-func (ch *CommandsHandler) Handle(openingGateMode chan bool) {
+func (ch *CommandsHandler) Handle(users map[int64]User) {
+	if u, ok := users[ch.update.Message.Chat.ID]; ok {
+		u.cancel()
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	users[ch.update.Message.Chat.ID] = User{
+		ctx:    ctx,
+		cancel: cancel,
+	}
+
 	switch ch.update.Message.Command() {
 	case StartCmd:
 		ch.sendHello()
@@ -43,9 +54,10 @@ func (ch *CommandsHandler) Handle(openingGateMode chan bool) {
 	case OpenGateExitCmd:
 		ch.sendOpenGateExit()
 	case OpeningGateEntryModeCmd:
-		ch.sendOpeningGateModeCmd(openingGateMode)
+		ch.sendOpeningGateModeCmd(ctx)
 	case OpeningGateEntryModeStopCmd:
-		ch.sendOpeningGateModeStopCmd(openingGateMode)
+		users[ch.update.Message.Chat.ID].cancel()
+		ch.sendOpeningGateModeStopCmd()
 	default:
 		ch.SendMsg(MsgUnknownCommand)
 	}
@@ -87,14 +99,11 @@ func (ch *CommandsHandler) sendOpenGateExit() {
 	ch.SendMsg(msgGateOpened)
 }
 
-func (ch *CommandsHandler) sendOpeningGateModeCmd(openingGateMode chan bool) {
-	ch.gc.OpenGateAlways(openingGateMode)
+func (ch *CommandsHandler) sendOpeningGateModeCmd(ctx context.Context) {
+	ch.gc.OpenGateAlways(ctx)
 	ch.SendMsg(msgGateOpeningModeActivated)
 }
 
-func (ch *CommandsHandler) sendOpeningGateModeStopCmd(openingGateMode chan bool) {
-	go func() {
-		openingGateMode <- false
-	}()
+func (ch *CommandsHandler) sendOpeningGateModeStopCmd() {
 	ch.SendMsg(msgGateOpeningModeDeactivated)
 }

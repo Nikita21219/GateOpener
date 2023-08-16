@@ -58,7 +58,8 @@ func main() {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 30
 	updates, err := bot.GetUpdatesChan(u)
-	openingGateMode := make(chan bool)
+	//openingGateMode := make(chan bool)
+	usersContexts := make(map[int64]telegram.User)
 
 	admins := initAdmins()
 	for update := range updates {
@@ -74,7 +75,7 @@ func main() {
 				commandHandler.SendMsg(telegram.MsgNotAllowedControl)
 				continue
 			}
-			commandHandler.Handle(openingGateMode)
+			commandHandler.Handle(usersContexts)
 		}
 	}
 }
