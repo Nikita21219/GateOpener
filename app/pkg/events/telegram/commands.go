@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"fmt"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"log"
 	gate_controller "main/pkg/gate-controller"
@@ -69,7 +70,8 @@ func (ch *CommandsHandler) sendHelp() {
 func (ch *CommandsHandler) sendOpenGateEntry() {
 	if err := ch.gc.OpenGate(true); err != nil {
 		log.Printf("cant open gate: %s\n", err)
-		ch.SendMsg(msgCantGateOpen)
+		msg := fmt.Sprintf("%s: %s", msgCantGateOpen, err)
+		ch.SendMsg(msg)
 		return
 	}
 	ch.SendMsg(msgGateOpened)
@@ -78,7 +80,8 @@ func (ch *CommandsHandler) sendOpenGateEntry() {
 func (ch *CommandsHandler) sendOpenGateExit() {
 	if err := ch.gc.OpenGate(false); err != nil {
 		log.Printf("cant open gate: %s\n", err)
-		ch.SendMsg(msgCantGateOpen)
+		msg := fmt.Sprintf("%s: %s", msgCantGateOpen, err)
+		ch.SendMsg(msg)
 		return
 	}
 	ch.SendMsg(msgGateOpened)
