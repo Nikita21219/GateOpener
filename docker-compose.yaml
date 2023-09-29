@@ -3,6 +3,7 @@ version: '3.9'
 services:
   app:
     container_name: tgbot_gate_opener
+    restart: unless-stopped
     environment:
       BOT_TOKEN: ${BOT_TOKEN}
       SID: ${SID}
