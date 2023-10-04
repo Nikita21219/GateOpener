@@ -5,6 +5,7 @@ import (
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"log"
 	"main/pkg/events/telegram"
+	"main/pkg/utils"
 	"os"
 	"strings"
 )
@@ -20,11 +21,7 @@ func mustCheckEnvVars() bool {
 		}
 	}
 
-	debugMode := false
-	if debug := os.Getenv("DEBUG"); debug == "1" || debug == "true" {
-		debugMode = true
-	}
-	return debugMode
+	return utils.Debug()
 }
 
 func initAdmins() map[string]struct{} {

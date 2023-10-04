@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"main/internal/amvideo"
+	"main/pkg/utils"
 	"net/http"
 	"os"
 	"strings"
@@ -33,6 +34,10 @@ func (gc *GateController) addHeaders(r *http.Request) {
 }
 
 func (gc *GateController) OpenGate(entry bool) error {
+	if utils.Debug() {
+		return nil
+	}
+
 	var gateId string
 
 	client := http.Client{}

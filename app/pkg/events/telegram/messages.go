@@ -5,7 +5,7 @@ const msgHelp = `
 
 /open_exit - открыть шлагбаум на выезд
 
-/opening_mode - активировать режим открытия шлагбаумов
+/opening_mode - открыть шлагбаумы на 5 минут
 
 /opening_mode_stop - деактивировать режим открытия шлагбаумов
 `
@@ -18,6 +18,6 @@ const msgHello = `
 const MsgUnknownCommand = `Я тебя не понимаю`
 const msgCantGateOpen = `Произошла ошибка при работе со шлагбаумом`
 const msgGateOpened = `Шлагбаум открыт`
-const msgGateOpeningModeActivated = `Режим бесконечного открытия шлагбаума активирован`
-const msgGateOpeningModeDeactivated = `Режим бесконечного открытия шлагбаума деактивирован`
+const msgGateOpeningModeActivated = `Шлагбаумы открыты на 5 минут`
+const msgGateOpeningModeDeactivated = `Режим открытия шлагбаумов деактивирован`
 const MsgNotAllowedControl = `Вы не являетесь администратором`
