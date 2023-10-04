@@ -69,13 +69,11 @@ func main() {
 
 		logUserMessage(update)
 
-		if update.Message.IsCommand() {
-			commandHandler := telegram.NewCommandsHandler(bot, update)
-			if _, ok := admins[update.Message.Chat.UserName]; !ok {
-				commandHandler.SendMsg(telegram.MsgNotAllowedControl)
-				continue
-			}
-			commandHandler.Handle(usersContexts)
+		commandHandler := telegram.NewCommandsHandler(bot, update)
+		if _, ok := admins[update.Message.Chat.UserName]; !ok {
+			commandHandler.SendMsg(telegram.MsgNotAllowedControl)
+			continue
 		}
+		commandHandler.Handle(usersContexts)
 	}
 }

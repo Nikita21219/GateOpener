@@ -17,7 +17,23 @@ const (
 	OpeningGateEntryModeCmd     = "opening_mode"
 	OpeningGateEntryModeStopCmd = "opening_mode_stop"
 
+	OpenGateEntryAction            = "⬅️Въезд⬅️️"
+	OpenGateExitAction             = "➡️Выезд➡️"
+	OpeningGateEntryModeAction     = "⚠️5 минут⚠️"
+	OpeningGateEntryModeStopAction = "✅️Закрыть✅"
+
 	urlAMVideoApi = "https://lk.amvideo-msk.ru/api/api4.php"
+)
+
+var actionsKeyboard = tgbotapi.NewReplyKeyboard(
+	tgbotapi.NewKeyboardButtonRow(
+		tgbotapi.NewKeyboardButton(OpenGateEntryAction),
+	),
+	tgbotapi.NewKeyboardButtonRow(
+		tgbotapi.NewKeyboardButton(OpenGateExitAction),
+		tgbotapi.NewKeyboardButton(OpeningGateEntryModeAction),
+		tgbotapi.NewKeyboardButton(OpeningGateEntryModeStopAction),
+	),
 )
 
 type CommandsHandler struct {
@@ -44,18 +60,25 @@ func (ch *CommandsHandler) Handle(users map[int64]User) {
 		cancel: cancel,
 	}
 
-	switch ch.update.Message.Command() {
+	var action string
+	if ch.update.Message.IsCommand() {
+		action = ch.update.Message.Command()
+	} else {
+		action = ch.update.Message.Text
+	}
+
+	switch action {
 	case StartCmd:
 		ch.sendHello()
 	case HelpCmd:
 		ch.sendHelp()
-	case OpenGateEntryCmd:
+	case OpenGateEntryCmd, OpenGateEntryAction:
 		ch.sendOpenGateEntry()
-	case OpenGateExitCmd:
+	case OpenGateExitCmd, OpenGateExitAction:
 		ch.sendOpenGateExit()
-	case OpeningGateEntryModeCmd:
+	case OpeningGateEntryModeCmd, OpeningGateEntryModeAction:
 		ch.sendOpeningGateModeCmd(ctx)
-	case OpeningGateEntryModeStopCmd:
+	case OpeningGateEntryModeStopCmd, OpeningGateEntryModeStopAction:
 		users[ch.update.Message.Chat.ID].cancel()
 		ch.sendOpeningGateModeStopCmd()
 	default:
@@ -65,6 +88,7 @@ func (ch *CommandsHandler) Handle(users map[int64]User) {
 
 func (ch *CommandsHandler) SendMsg(messageText string) {
 	msg := tgbotapi.NewMessage(ch.update.Message.Chat.ID, messageText)
+	msg.ReplyMarkup = actionsKeyboard
 	_, err := ch.bot.Send(msg)
 	if err != nil {
 		log.Println("Ошибка отправки сообщения:", err)
