@@ -6,14 +6,18 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"main/internal/amvideo"
-	"main/pkg/utils"
 	"net/http"
 	"os"
 	"strings"
 	"sync"
 	"time"
+
+	"main/internal/amvideo"
+	"main/pkg/retry"
+	"main/pkg/utils"
 )
+
+const totalRetries = 5
 
 type GateController struct {
 	urlAMVideo string
@@ -33,7 +37,7 @@ func (gc *GateController) addHeaders(r *http.Request) {
 	r.Header.Add("cache-control", "no-cache")
 }
 
-func (gc *GateController) OpenGate(entry bool) error {
+func (gc *GateController) OpenGate(ctx context.Context, entry bool) error {
 	if utils.Debug() {
 		return nil
 	}
@@ -57,10 +61,19 @@ func (gc *GateController) OpenGate(entry bool) error {
 
 	gc.addHeaders(request)
 
-	resp, err := client.Do(request)
+	var resp *http.Response
+	err = retry.Retry(ctx, totalRetries, func(ctx context.Context) error {
+		resp, err = client.Do(request)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
 		return err
 	}
+
 	defer resp.Body.Close()
 
 	respBody, err := io.ReadAll(resp.Body)
@@ -68,7 +81,7 @@ func (gc *GateController) OpenGate(entry bool) error {
 		return err
 	}
 
-	a := amvideo.AMVideoDto{}
+	var a amvideo.Dto
 	err = json.Unmarshal(respBody, &a)
 	if err != nil {
 		return err
@@ -81,7 +94,7 @@ func (gc *GateController) OpenGate(entry bool) error {
 	return nil
 }
 
-func (gc *GateController) OpenGateAlways(ctx context.Context) {
+func (gc *GateController) OpenGateAlways(ctx context.Context, ch chan error) {
 	go func() {
 		for {
 			select {
@@ -94,14 +107,16 @@ func (gc *GateController) OpenGateAlways(ctx context.Context) {
 
 				for _, val := range []bool{true, false} {
 					wg.Add(1)
-					val := val
-					go func() {
+
+					go func(val bool) {
 						defer wg.Done()
-						err := gc.OpenGate(val)
+
+						err := gc.OpenGate(ctx, val)
 						if err != nil {
 							log.Println("error to open gate to entry:", err)
+							ch <- err
 						}
-					}()
+					}(val)
 				}
 
 				wg.Wait()

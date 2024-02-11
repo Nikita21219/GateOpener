@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"log"
-	"main/pkg/events/telegram"
-	"main/pkg/utils"
 	"os"
 	"strings"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+
+	"main/pkg/events/telegram"
+	"main/pkg/utils"
 )
 
 func mustCheckEnvVars() bool {
@@ -55,7 +57,6 @@ func main() {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 30
 	updates, err := bot.GetUpdatesChan(u)
-	//openingGateMode := make(chan bool)
 	usersContexts := make(map[int64]telegram.User)
 
 	admins := initAdmins()

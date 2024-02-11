@@ -1,6 +1,6 @@
 package amvideo
 
-type AMVideoDto struct {
+type Dto struct {
 	Message string `json:"str"`
 	Result  bool   `json:"result"`
 }

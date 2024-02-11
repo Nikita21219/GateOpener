@@ -3,10 +3,12 @@ package telegram
 import (
 	"context"
 	"fmt"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"log"
-	gate_controller "main/pkg/gate-controller"
 	"time"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+
+	gate_controller "main/pkg/gate-controller"
 )
 
 const (
@@ -73,9 +75,9 @@ func (ch *CommandsHandler) Handle(users map[int64]User) {
 	case HelpCmd:
 		ch.sendHelp()
 	case OpenGateEntryCmd, OpenGateEntryAction:
-		ch.sendOpenGateEntry()
+		ch.sendOpenGateEntry(ctx)
 	case OpenGateExitCmd, OpenGateExitAction:
-		ch.sendOpenGateExit()
+		ch.sendOpenGateExit(ctx)
 	case OpeningGateEntryModeCmd, OpeningGateEntryModeAction:
 		ch.sendOpeningGateModeCmd(ctx)
 	case OpeningGateEntryModeStopCmd, OpeningGateEntryModeStopAction:
@@ -103,8 +105,8 @@ func (ch *CommandsHandler) sendHelp() {
 	ch.SendMsg(msgHelp)
 }
 
-func (ch *CommandsHandler) sendOpenGateEntry() {
-	if err := ch.gc.OpenGate(true); err != nil {
+func (ch *CommandsHandler) sendOpenGateEntry(ctx context.Context) {
+	if err := ch.gc.OpenGate(ctx, true); err != nil {
 		log.Printf("cant open gate: %s\n", err)
 		msg := fmt.Sprintf("%s: %s", msgCantGateOpen, err)
 		ch.SendMsg(msg)
@@ -113,8 +115,8 @@ func (ch *CommandsHandler) sendOpenGateEntry() {
 	ch.SendMsg(msgGateOpened)
 }
 
-func (ch *CommandsHandler) sendOpenGateExit() {
-	if err := ch.gc.OpenGate(false); err != nil {
+func (ch *CommandsHandler) sendOpenGateExit(ctx context.Context) {
+	if err := ch.gc.OpenGate(ctx, false); err != nil {
 		log.Printf("cant open gate: %s\n", err)
 		msg := fmt.Sprintf("%s: %s", msgCantGateOpen, err)
 		ch.SendMsg(msg)
@@ -124,8 +126,23 @@ func (ch *CommandsHandler) sendOpenGateExit() {
 }
 
 func (ch *CommandsHandler) sendOpeningGateModeCmd(ctx context.Context) {
-	ch.gc.OpenGateAlways(ctx)
+	chErr := make(chan error)
+
+	ch.gc.OpenGateAlways(ctx, chErr)
 	ch.SendMsg(msgGateOpeningModeActivated)
+
+	// start checking errors
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case err := <-chErr:
+				msgErr := fmt.Sprintf("%s: %v", msgCantGateOpen, err)
+				ch.SendMsg(msgErr)
+			}
+		}
+	}()
 }
 
 func (ch *CommandsHandler) sendOpeningGateModeStopCmd() {
