@@ -1,4 +1,4 @@
-package amvideo
+package gate_controller
 
 type Dto struct {
 	Message string `json:"str"`

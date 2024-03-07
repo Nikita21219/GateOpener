@@ -8,8 +8,12 @@ import (
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 
-	"main/pkg/events/telegram"
+	telegram2 "main/internal/events/telegram"
 	"main/pkg/utils"
+)
+
+var (
+	admins = initAdmins()
 )
 
 func mustCheckEnvVars() bool {
@@ -27,12 +31,13 @@ func mustCheckEnvVars() bool {
 }
 
 func initAdmins() map[string]struct{} {
-	admins := make(map[string]struct{})
+	m := make(map[string]struct{})
 	administrators := strings.Split(os.Getenv("ADMINS"), ", ")
 	for _, a := range administrators {
-		admins[a] = struct{}{}
+		m[a] = struct{}{}
 	}
-	return admins
+
+	return m
 }
 
 func logUserMessage(update tgbotapi.Update) {
@@ -43,35 +48,43 @@ func logUserMessage(update tgbotapi.Update) {
 		userName = fmt.Sprintf("%s %s", update.Message.Chat.FirstName, update.Message.Chat.LastName)
 	}
 
-	log.Printf("User %s sended message: %s\n", userName, update.Message.Text)
+	log.Println(fmt.Sprintf("User %s sended message: %s", userName, update.Message.Text))
+}
+
+func userNotAdmin(update tgbotapi.Update) bool {
+	_, ok := admins[update.Message.Chat.UserName]
+	return !ok
 }
 
 func main() {
 	debug := mustCheckEnvVars()
 	bot, err := tgbotapi.NewBotAPI(os.Getenv("BOT_TOKEN"))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalln("error to create bot:", err)
 	}
 	bot.Debug = debug
 
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 30
 	updates, err := bot.GetUpdatesChan(u)
-	usersContexts := make(map[int64]telegram.User)
+	if err != nil {
+		log.Fatalln("error to get updates", err)
+	}
 
-	admins := initAdmins()
+	usersContexts := make(map[int64]telegram2.User)
+
+	commandHandler := telegram2.NewCommandsHandler(bot)
 	for update := range updates {
 		if update.Message == nil {
 			continue
 		}
 
 		logUserMessage(update)
-
-		commandHandler := telegram.NewCommandsHandler(bot, update)
-		if _, ok := admins[update.Message.Chat.UserName]; !ok {
-			commandHandler.SendMsg(telegram.MsgNotAllowedControl)
+		if userNotAdmin(update) {
+			commandHandler.SendMsg(telegram2.MsgNotAllowedControl, update)
 			continue
 		}
-		commandHandler.Handle(usersContexts)
+
+		commandHandler.Handle(usersContexts, update)
 	}
 }

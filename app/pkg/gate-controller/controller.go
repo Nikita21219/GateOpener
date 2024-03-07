@@ -12,12 +12,17 @@ import (
 	"sync"
 	"time"
 
-	"main/internal/amvideo"
 	"main/pkg/retry"
 	"main/pkg/utils"
 )
 
-const totalRetries = 5
+const (
+	totalRetries  = 8
+	urlAMVideoApi = "https://lk.amvideo-msk.ru/api/api4.php"
+
+	EntryGateId = "1500"
+	ExitGateId  = "1501"
+)
 
 type GateController struct {
 	urlAMVideo string
@@ -37,20 +42,13 @@ func (gc *GateController) addHeaders(r *http.Request) {
 	r.Header.Add("cache-control", "no-cache")
 }
 
-func (gc *GateController) OpenGate(ctx context.Context, entry bool) error {
+func (gc *GateController) OpenGate(ctx context.Context, gateId string) error {
 	if utils.Debug() {
+		log.Println("debug mode active, gate not opened")
 		return nil
 	}
 
-	var gateId string
-
 	client := http.Client{}
-	switch entry {
-	case true:
-		gateId = "1500"
-	default:
-		gateId = "1501"
-	}
 
 	bodyStr := fmt.Sprintf("type=open&id_shlag=%s&relay=0&sid=%s", gateId, os.Getenv("SID"))
 	body := strings.NewReader(bodyStr)
@@ -81,23 +79,33 @@ func (gc *GateController) OpenGate(ctx context.Context, entry bool) error {
 		return err
 	}
 
-	var a amvideo.Dto
+	var a Dto
 	err = json.Unmarshal(respBody, &a)
 	if err != nil {
 		return err
 	}
 
 	if !a.Result {
-		return fmt.Errorf(a.Message)
+		switch {
+		case a.Message == "":
+			return fmt.Errorf("неизвестная ошибка")
+		default:
+			return fmt.Errorf(a.Message)
+		}
 	}
 
 	return nil
 }
 
-func (gc *GateController) OpenGateAlways(ctx context.Context, ch chan error) {
+func (gc *GateController) OpenGateForTimePeriod(ctx context.Context, ch chan error, duration time.Duration) {
+	ticker := time.NewTicker(duration)
+
 	go func() {
 		for {
 			select {
+			case <-ticker.C:
+				log.Println("gate opening mode stopped")
+				return
 			case <-ctx.Done():
 				log.Println("gate opening mode stopped")
 				return
@@ -105,18 +113,18 @@ func (gc *GateController) OpenGateAlways(ctx context.Context, ch chan error) {
 				wg := sync.WaitGroup{}
 				log.Println("gate opening mode active...")
 
-				for _, val := range []bool{true, false} {
+				for _, gateId := range []string{EntryGateId, ExitGateId} {
 					wg.Add(1)
 
-					go func(val bool) {
+					go func(gateId string) {
 						defer wg.Done()
 
-						err := gc.OpenGate(ctx, val)
+						err := gc.OpenGate(ctx, gateId)
 						if err != nil {
 							log.Println("error to open gate to entry:", err)
 							ch <- err
 						}
-					}(val)
+					}(gateId)
 				}
 
 				wg.Wait()
@@ -126,7 +134,7 @@ func (gc *GateController) OpenGateAlways(ctx context.Context, ch chan error) {
 	}()
 }
 
-func NewController(urlAMVideoApi string) *GateController {
+func NewController() *GateController {
 	return &GateController{
 		urlAMVideo: urlAMVideoApi,
 	}
