@@ -129,13 +129,13 @@ func (ch *CommandsHandler) sendOpeningGateModeCmd(ctx context.Context, users map
 	chatId := update.Message.Chat.ID
 	ch.stopGateOpening(users, chatId)
 
-	openingGateDuration := 5 * time.Minute
 	chErr := make(chan error)
 
 	ctxWithTimeout, cancel := context.WithCancel(ctx)
 	users[chatId] = NewUser(cancel)
+	ticker := time.NewTicker(5 * time.Minute)
 
-	ch.gc.OpenGateForTimePeriod(ctxWithTimeout, chErr, openingGateDuration)
+	ch.gc.OpenGateForTimePeriod(ctxWithTimeout, chErr, ticker)
 	ch.SendMsg(msgGateOpeningModeActivated, update)
 
 	// start checking errors
@@ -143,6 +143,8 @@ func (ch *CommandsHandler) sendOpeningGateModeCmd(ctx context.Context, users map
 		for {
 			select {
 			case <-ctxWithTimeout.Done():
+				return
+			case <-ticker.C:
 				return
 			case err := <-chErr:
 				ch.SendMsg(fmt.Sprintf("%s: %v", msgCantGateOpen, err), update)

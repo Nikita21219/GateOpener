@@ -97,9 +97,7 @@ func (gc *GateController) OpenGate(ctx context.Context, gateId string) error {
 	return nil
 }
 
-func (gc *GateController) OpenGateForTimePeriod(ctx context.Context, ch chan error, duration time.Duration) {
-	ticker := time.NewTicker(duration)
-
+func (gc *GateController) OpenGateForTimePeriod(ctx context.Context, ch chan error, ticker *time.Ticker) {
 	go func() {
 		for {
 			select {
