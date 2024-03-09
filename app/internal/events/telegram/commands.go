@@ -16,12 +16,14 @@ const (
 	helpCmd                     = "help"
 	openGateEntryCmd            = "open_entry"
 	openGateExitCmd             = "open_exit"
+	openGateExitModeCmd         = "open_exit_mode"
 	openingGateEntryModeCmd     = "opening_mode"
 	openingGateEntryModeStopCmd = "opening_mode_stop"
 
 	openGateEntryAction            = "⬅️Въезд⬅️️"
 	openGateExitAction             = "➡️Выезд➡️"
-	openingGateEntryModeAction     = "⚠️5 минут⚠️"
+	openGateExitModeAction         = "➡️Выезд на 30 сек➡️"
+	openingGateEntryModeAction     = "⚠️Въезд, выезд на 5 минут⚠️"
 	openingGateEntryModeStopAction = "✅️Закрыть✅"
 )
 
@@ -29,10 +31,15 @@ var (
 	actionsKeyboard = tgbotapi.NewReplyKeyboard(
 		tgbotapi.NewKeyboardButtonRow(
 			tgbotapi.NewKeyboardButton(openGateEntryAction),
+			tgbotapi.NewKeyboardButton(openGateExitAction),
 		),
 		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton(openGateExitAction),
+			tgbotapi.NewKeyboardButton(openGateExitModeAction),
+		),
+		tgbotapi.NewKeyboardButtonRow(
 			tgbotapi.NewKeyboardButton(openingGateEntryModeAction),
+		),
+		tgbotapi.NewKeyboardButtonRow(
 			tgbotapi.NewKeyboardButton(openingGateEntryModeStopAction),
 		),
 	)
@@ -61,7 +68,9 @@ func (ch *CommandsHandler) Handle(users map[int64]User, update tgbotapi.Update) 
 	case openGateEntryCmd, openGateEntryAction:
 		ch.sendOpenGateEntry(ctx, update)
 	case openGateExitCmd, openGateExitAction:
-		ch.sendOpenGateExit(ctx, update, users)
+		ch.sendOpenGateExit(ctx, update)
+	case openGateExitModeCmd, openGateExitModeAction:
+		ch.sendOpenGateExitMode(ctx, update, users)
 	case openingGateEntryModeCmd, openingGateEntryModeAction:
 		ch.sendOpeningGateModeCmd(ctx, users, update)
 	case openingGateEntryModeStopCmd, openingGateEntryModeStopAction:
@@ -77,6 +86,7 @@ func (ch *CommandsHandler) SendMsg(messageText string, update tgbotapi.Update) {
 	_, err := ch.bot.Send(msg)
 	if err != nil {
 		log.Println("Ошибка отправки сообщения:", err)
+		return
 	}
 }
 
@@ -115,7 +125,11 @@ func (ch *CommandsHandler) sendOpenGateEntry(ctx context.Context, update tgbotap
 	ch.openGate(ctx, gateController.EntryGateId, update)
 }
 
-func (ch *CommandsHandler) sendOpenGateExit(ctx context.Context, update tgbotapi.Update, users map[int64]User) {
+func (ch *CommandsHandler) sendOpenGateExit(ctx context.Context, update tgbotapi.Update) {
+	ch.openGate(ctx, gateController.ExitGateId, update)
+}
+
+func (ch *CommandsHandler) sendOpenGateExitMode(ctx context.Context, update tgbotapi.Update, users map[int64]User) {
 	ticker := time.NewTicker(30 * time.Second)
 	gates := []string{gateController.ExitGateId}
 	ch.startGateOpening(ctx, users, update, gates, ticker, msgGateExitOpeningModeActivated)
