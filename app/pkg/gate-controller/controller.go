@@ -97,7 +97,7 @@ func (gc *GateController) OpenGate(ctx context.Context, gateId string) error {
 	return nil
 }
 
-func (gc *GateController) OpenGateForTimePeriod(ctx context.Context, ch chan error, ticker *time.Ticker) {
+func (gc *GateController) OpenGateForTimePeriod(ctx context.Context, ch chan error, ticker *time.Ticker, gates []string) {
 	go func() {
 		for {
 			select {
@@ -111,7 +111,7 @@ func (gc *GateController) OpenGateForTimePeriod(ctx context.Context, ch chan err
 				wg := sync.WaitGroup{}
 				log.Println("gate opening mode active...")
 
-				for _, gateId := range []string{EntryGateId, ExitGateId} {
+				for _, gateId := range gates {
 					wg.Add(1)
 
 					go func(gateId string) {

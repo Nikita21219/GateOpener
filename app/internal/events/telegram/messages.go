@@ -19,5 +19,6 @@ const MsgUnknownCommand = `Я тебя не понимаю`
 const msgCantGateOpen = `Произошла ошибка при работе со шлагбаумом`
 const msgGateOpened = `Шлагбаум открыт`
 const msgGateOpeningModeActivated = `Шлагбаумы открыты на 5 минут`
+const msgGateExitOpeningModeActivated = `Шлагбаум на выезд открыт на 30 секунд`
 const msgGateOpeningModeDeactivated = `Режим открытия шлагбаумов деактивирован`
 const MsgNotAllowedControl = `Вы не являетесь администратором`
