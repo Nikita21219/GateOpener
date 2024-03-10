@@ -132,7 +132,7 @@ func (ch *CommandsHandler) sendOpenGateExit(ctx context.Context, update tgbotapi
 func (ch *CommandsHandler) sendOpenGateExitMode(ctx context.Context, update tgbotapi.Update, users map[int64]User) {
 	ticker := time.NewTicker(30 * time.Second)
 	gates := []string{gateController.ExitGateId}
-	ch.startGateOpening(ctx, users, update, gates, ticker, msgGateExitOpeningModeActivated)
+	ch.startGatesOpening(ctx, users, update, gates, ticker, msgGateExitOpeningModeActivated)
 }
 
 func (ch *CommandsHandler) stopGateOpening(users map[int64]User, chatId int64) {
@@ -141,7 +141,7 @@ func (ch *CommandsHandler) stopGateOpening(users map[int64]User, chatId int64) {
 	}
 }
 
-func (ch *CommandsHandler) startGateOpening(
+func (ch *CommandsHandler) startGatesOpening(
 	ctx context.Context,
 	users map[int64]User,
 	update tgbotapi.Update,
@@ -178,7 +178,7 @@ func (ch *CommandsHandler) startGateOpening(
 func (ch *CommandsHandler) sendOpeningGateMode(ctx context.Context, users map[int64]User, update tgbotapi.Update) {
 	ticker := time.NewTicker(5 * time.Minute)
 	gates := []string{gateController.EntryGateId, gateController.ExitGateId}
-	ch.startGateOpening(ctx, users, update, gates, ticker, msgGateOpeningModeActivated)
+	ch.startGatesOpening(ctx, users, update, gates, ticker, msgGateOpeningModeActivated)
 }
 
 func (ch *CommandsHandler) sendOpeningGateModeStop(users map[int64]User, update tgbotapi.Update) {
