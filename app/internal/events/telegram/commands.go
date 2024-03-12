@@ -48,49 +48,55 @@ var (
 type CommandsHandler struct {
 	bot *tgbotapi.BotAPI
 	gc  *gateController.GateController
+	ch  chan int64
 }
 
-func NewCommandsHandler(bot *tgbotapi.BotAPI) *CommandsHandler {
+func NewCommandsHandler(bot *tgbotapi.BotAPI, ch chan int64) *CommandsHandler {
 	return &CommandsHandler{
 		bot: bot,
 		gc:  gateController.NewController(),
+		ch:  ch,
 	}
 }
 
-func (ch *CommandsHandler) Handle(users map[int64]User, update tgbotapi.Update) {
+func (h *CommandsHandler) Handle(users map[int64]User, update tgbotapi.Update) {
 	ctx := context.Background()
 
-	switch ch.action(update) {
+	switch h.action(update) {
 	case startCmd:
-		ch.sendStart(update)
+		h.sendStart(update)
 	case helpCmd:
-		ch.sendHelp(update)
+		h.sendHelp(update)
 	case openGateEntryCmd, openGateEntryAction:
-		ch.sendOpenGateEntry(ctx, update)
+		h.sendOpenGateEntry(ctx, update)
 	case openGateExitCmd, openGateExitAction:
-		ch.sendOpenGateExit(ctx, update)
+		h.sendOpenGateExit(ctx, update)
 	case openGateExitModeCmd, openGateExitModeAction:
-		ch.sendOpenGateExitMode(ctx, update, users)
+		h.sendOpenGateExitMode(ctx, update, users)
 	case openingGateEntryModeCmd, openingGateEntryModeAction:
-		ch.sendOpeningGateMode(ctx, users, update)
+		h.sendOpeningGateMode(ctx, users, update)
 	case openingGateEntryModeStopCmd, openingGateEntryModeStopAction:
-		ch.sendOpeningGateModeStop(users, update)
+		h.sendOpeningGateModeStop(users, update)
 	default:
-		ch.SendMsg(MsgUnknownCommand, update)
+		h.SendMsg(MsgUnknownCommand, update)
 	}
 }
 
-func (ch *CommandsHandler) SendMsg(messageText string, update tgbotapi.Update) {
-	msg := tgbotapi.NewMessage(update.Message.Chat.ID, messageText)
+func (h *CommandsHandler) SendMsg(messageText string, update tgbotapi.Update) {
+	h.SendMsgWithChatId(messageText, update.Message.Chat.ID)
+}
+
+func (h *CommandsHandler) SendMsgWithChatId(messageText string, chatId int64) {
+	msg := tgbotapi.NewMessage(chatId, messageText)
 	msg.ReplyMarkup = actionsKeyboard
-	_, err := ch.bot.Send(msg)
+	_, err := h.bot.Send(msg)
 	if err != nil {
 		log.Println("Ошибка отправки сообщения:", err)
 		return
 	}
 }
 
-func (ch *CommandsHandler) action(update tgbotapi.Update) string {
+func (h *CommandsHandler) action(update tgbotapi.Update) string {
 	var action string
 
 	if update.Message.IsCommand() {
@@ -102,46 +108,46 @@ func (ch *CommandsHandler) action(update tgbotapi.Update) string {
 	return action
 }
 
-func (ch *CommandsHandler) sendStart(update tgbotapi.Update) {
-	ch.SendMsg(msgStart, update)
+func (h *CommandsHandler) sendStart(update tgbotapi.Update) {
+	h.SendMsg(msgStart, update)
 }
 
-func (ch *CommandsHandler) sendHelp(update tgbotapi.Update) {
-	ch.SendMsg(msgHelp, update)
+func (h *CommandsHandler) sendHelp(update tgbotapi.Update) {
+	h.SendMsg(msgHelp, update)
 }
 
-func (ch *CommandsHandler) openGate(ctx context.Context, gateId string, update tgbotapi.Update) {
-	if err := ch.gc.OpenGate(ctx, gateId); err != nil {
+func (h *CommandsHandler) openGate(ctx context.Context, gateId string, update tgbotapi.Update) {
+	if err := h.gc.OpenGate(ctx, gateId); err != nil {
 		log.Println("cant open gate:", err)
 		msg := fmt.Sprintf("%s: %s", msgCantGateOpen, err)
-		ch.SendMsg(msg, update)
+		h.SendMsg(msg, update)
 		return
 	}
 
-	ch.SendMsg(msgGateOpened, update)
+	h.SendMsg(msgGateOpened, update)
 }
 
-func (ch *CommandsHandler) sendOpenGateEntry(ctx context.Context, update tgbotapi.Update) {
-	ch.openGate(ctx, gateController.EntryGateId, update)
+func (h *CommandsHandler) sendOpenGateEntry(ctx context.Context, update tgbotapi.Update) {
+	h.openGate(ctx, gateController.EntryGateId, update)
 }
 
-func (ch *CommandsHandler) sendOpenGateExit(ctx context.Context, update tgbotapi.Update) {
-	ch.openGate(ctx, gateController.ExitGateId, update)
+func (h *CommandsHandler) sendOpenGateExit(ctx context.Context, update tgbotapi.Update) {
+	h.openGate(ctx, gateController.ExitGateId, update)
 }
 
-func (ch *CommandsHandler) sendOpenGateExitMode(ctx context.Context, update tgbotapi.Update, users map[int64]User) {
+func (h *CommandsHandler) sendOpenGateExitMode(ctx context.Context, update tgbotapi.Update, users map[int64]User) {
 	ticker := time.NewTicker(30 * time.Second)
 	gates := []string{gateController.ExitGateId}
-	ch.startGatesOpening(ctx, users, update, gates, ticker, msgGateExitOpeningModeActivated)
+	h.startGatesOpening(ctx, users, update, gates, ticker, msgGateExitOpeningModeActivated)
 }
 
-func (ch *CommandsHandler) stopGateOpening(users map[int64]User, chatId int64) {
+func (h *CommandsHandler) stopGateOpening(users map[int64]User, chatId int64) {
 	if u, ok := users[chatId]; ok {
 		u.cancelGateMode()
 	}
 }
 
-func (ch *CommandsHandler) startGatesOpening(
+func (h *CommandsHandler) startGatesOpening(
 	ctx context.Context,
 	users map[int64]User,
 	update tgbotapi.Update,
@@ -150,15 +156,15 @@ func (ch *CommandsHandler) startGatesOpening(
 	msg string,
 ) {
 	chatId := update.Message.Chat.ID
-	ch.stopGateOpening(users, chatId)
+	h.stopGateOpening(users, chatId)
 
 	chErr := make(chan error)
 
 	ctxWithTimeout, cancel := context.WithCancel(ctx)
 	users[chatId] = NewUser(cancel)
 
-	ch.gc.OpenGateForTimePeriod(ctxWithTimeout, chErr, ticker, gates)
-	ch.SendMsg(msg, update)
+	h.gc.OpenGateForTimePeriod(ctxWithTimeout, chErr, ticker, gates)
+	h.SendMsg(msg, update)
 
 	// start checking errors
 	go func() {
@@ -167,21 +173,22 @@ func (ch *CommandsHandler) startGatesOpening(
 			case <-ctxWithTimeout.Done():
 				return
 			case <-ticker.C:
+				h.ch <- chatId
 				return
 			case err := <-chErr:
-				ch.SendMsg(fmt.Sprintf("%s: %v", msgCantGateOpen, err), update)
+				h.SendMsg(fmt.Sprintf("%s: %v", msgCantGateOpen, err), update)
 			}
 		}
 	}()
 }
 
-func (ch *CommandsHandler) sendOpeningGateMode(ctx context.Context, users map[int64]User, update tgbotapi.Update) {
+func (h *CommandsHandler) sendOpeningGateMode(ctx context.Context, users map[int64]User, update tgbotapi.Update) {
 	ticker := time.NewTicker(5 * time.Minute)
 	gates := []string{gateController.EntryGateId, gateController.ExitGateId}
-	ch.startGatesOpening(ctx, users, update, gates, ticker, msgGateOpeningModeActivated)
+	h.startGatesOpening(ctx, users, update, gates, ticker, msgGateOpeningModeActivated)
 }
 
-func (ch *CommandsHandler) sendOpeningGateModeStop(users map[int64]User, update tgbotapi.Update) {
-	ch.stopGateOpening(users, update.Message.Chat.ID)
-	ch.SendMsg(msgGateOpeningModeDeactivated, update)
+func (h *CommandsHandler) sendOpeningGateModeStop(users map[int64]User, update tgbotapi.Update) {
+	h.stopGateOpening(users, update.Message.Chat.ID)
+	h.SendMsg(msgGateOpeningModeDeactivated, update)
 }

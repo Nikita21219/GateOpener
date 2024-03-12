@@ -24,3 +24,4 @@ const msgGateOpeningModeActivated = `Шлагбаумы открыты на 5 м
 const msgGateExitOpeningModeActivated = `Шлагбаум на выезд открыт на 30 секунд`
 const msgGateOpeningModeDeactivated = `Режим открытия шлагбаумов деактивирован`
 const MsgNotAllowedControl = `Вы не являетесь администратором`
+const MsgOpeningModeStopped = `Режим открытия остановлен`

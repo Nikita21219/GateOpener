@@ -8,7 +8,7 @@ import (
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 
-	telegram2 "main/internal/events/telegram"
+	"main/internal/events/telegram"
 	"main/pkg/utils"
 )
 
@@ -71,9 +71,22 @@ func main() {
 		log.Fatalln("error to get updates", err)
 	}
 
-	usersContexts := make(map[int64]telegram2.User)
+	usersContexts := make(map[int64]telegram.User)
+	ch := make(chan int64)
+	commandsHandler := telegram.NewCommandsHandler(bot, ch)
 
-	commandHandler := telegram2.NewCommandsHandler(bot)
+	go func() {
+		// if opening mode stopped - send message
+		for {
+			chatId, ok := <-ch
+			if !ok {
+				log.Println("the channel listening to the events is closed")
+				return
+			}
+			commandsHandler.SendMsgWithChatId(telegram.MsgOpeningModeStopped, chatId)
+		}
+	}()
+
 	for update := range updates {
 		if update.Message == nil {
 			continue
@@ -81,10 +94,10 @@ func main() {
 
 		logUserMessage(update)
 		if userNotAdmin(update) {
-			commandHandler.SendMsg(telegram2.MsgNotAllowedControl, update)
+			commandsHandler.SendMsg(telegram.MsgNotAllowedControl, update)
 			continue
 		}
 
-		commandHandler.Handle(usersContexts, update)
+		commandsHandler.Handle(usersContexts, update)
 	}
 }
