@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	totalRetries  = 8
+	totalRetries  = 2
 	urlAMVideoApi = "https://lk.amvideo-msk.ru/api/api4.php"
 
 	EntryGateId = "1500"

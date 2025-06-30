@@ -23,7 +23,7 @@ const (
 	openGateEntryAction            = "⬅️Въезд⬅️️"
 	openGateExitAction             = "➡️Выезд➡️"
 	openGateExitModeAction         = "➡️Выезд на 30 сек➡️"
-	openingGateEntryModeAction     = "⚠️Въезд и выезд на 5 минут⚠️"
+	openingGateEntryModeAction     = "⚠️Въезд на 5 минут⚠️"
 	openingGateEntryModeStopAction = "✅️Закрыть✅"
 )
 
@@ -184,7 +184,7 @@ func (h *CommandsHandler) startGatesOpening(
 
 func (h *CommandsHandler) sendOpeningGateMode(ctx context.Context, users map[int64]User, update tgbotapi.Update) {
 	ticker := time.NewTicker(5 * time.Minute)
-	gates := []string{gateController.EntryGateId, gateController.ExitGateId}
+	gates := []string{gateController.EntryGateId}
 	h.startGatesOpening(ctx, users, update, gates, ticker, msgGateOpeningModeActivated)
 }
 
