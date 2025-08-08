@@ -15,14 +15,10 @@ const (
 	startCmd                    = "start"
 	helpCmd                     = "help"
 	openGateEntryCmd            = "open_entry"
-	openGateExitCmd             = "open_exit"
-	openGateExitModeCmd         = "opening_exit_mode"
 	openingGateEntryModeCmd     = "opening_mode"
 	openingGateEntryModeStopCmd = "opening_mode_stop"
 
 	openGateEntryAction            = "⬅️Въезд⬅️️"
-	openGateExitAction             = "➡️Выезд➡️"
-	openGateExitModeAction         = "➡️Выезд на 30 сек➡️"
 	openingGateEntryModeAction     = "⚠️Въезд на 5 минут⚠️"
 	openingGateEntryModeStopAction = "✅️Закрыть✅"
 )
@@ -31,10 +27,6 @@ var (
 	actionsKeyboard = tgbotapi.NewReplyKeyboard(
 		tgbotapi.NewKeyboardButtonRow(
 			tgbotapi.NewKeyboardButton(openGateEntryAction),
-			tgbotapi.NewKeyboardButton(openGateExitAction),
-		),
-		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton(openGateExitModeAction),
 		),
 		tgbotapi.NewKeyboardButtonRow(
 			tgbotapi.NewKeyboardButton(openingGateEntryModeAction),
@@ -69,10 +61,6 @@ func (h *CommandsHandler) Handle(users map[int64]User, update tgbotapi.Update) {
 		h.sendHelp(update)
 	case openGateEntryCmd, openGateEntryAction:
 		h.sendOpenGateEntry(ctx, update)
-	case openGateExitCmd, openGateExitAction:
-		h.sendOpenGateExit(ctx, update)
-	case openGateExitModeCmd, openGateExitModeAction:
-		h.sendOpenGateExitMode(ctx, update, users)
 	case openingGateEntryModeCmd, openingGateEntryModeAction:
 		h.sendOpeningGateMode(ctx, users, update)
 	case openingGateEntryModeStopCmd, openingGateEntryModeStopAction:
@@ -133,12 +121,6 @@ func (h *CommandsHandler) sendOpenGateEntry(ctx context.Context, update tgbotapi
 
 func (h *CommandsHandler) sendOpenGateExit(ctx context.Context, update tgbotapi.Update) {
 	h.openGate(ctx, gateController.ExitGateId, update)
-}
-
-func (h *CommandsHandler) sendOpenGateExitMode(ctx context.Context, update tgbotapi.Update, users map[int64]User) {
-	ticker := time.NewTicker(30 * time.Second)
-	gates := []string{gateController.ExitGateId}
-	h.startGatesOpening(ctx, users, update, gates, ticker, msgGateExitOpeningModeActivated)
 }
 
 func (h *CommandsHandler) stopGateOpening(users map[int64]User, chatId int64) {

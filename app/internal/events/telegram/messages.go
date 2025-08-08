@@ -1,15 +1,11 @@
 package telegram
 
 const msgHelp = `
-/open_entry - открыть шлагбаум на въезд
+/open_entry - открыть шлагбаум
 
-/open_exit - открыть шлагбаум на выезд
+/opening_mode - открыть шлагбаум на 5 минут
 
-/opening_mode - открыть оба шлагбаума на 5 минут
-
-/open_exit_mode - открыть шлагбаум на выезд на 30 секунд
-
-/opening_mode_stop - прекратить открывать шлагбаумы
+/opening_mode_stop - прекратить открывать шлагбаум
 `
 
 const msgStart = `
@@ -20,8 +16,7 @@ const msgStart = `
 const MsgUnknownCommand = `Я тебя не понимаю`
 const msgCantGateOpen = `Произошла ошибка при работе со шлагбаумом`
 const msgGateOpened = `Шлагбаум открыт`
-const msgGateOpeningModeActivated = `Шлагбаум на въезд открыт на 5 минут`
-const msgGateExitOpeningModeActivated = `Шлагбаум на выезд открыт на 30 секунд`
+const msgGateOpeningModeActivated = `Шлагбаум открыт на 5 минут`
 const msgGateOpeningModeDeactivated = `Режим открытия шлагбаума деактивирован`
 const MsgNotAllowedControl = `Вы не являетесь администратором`
 const MsgOpeningModeStopped = `Режим открытия остановлен`
